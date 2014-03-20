@@ -12,7 +12,7 @@ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 //analytics object deifintion
 var _analytics = {
 	//page vars
-	ua:			{ test:{'UA-0000000-0':'test'} },
+	ua:		{ test:{'UA-0000000-0':'test'} },
 	path:		window.location.pathname,
 	host:		window.location.host,
 	pound:		window.location.hash,
@@ -61,8 +61,8 @@ var _analytics = {
 	},
 
 	//send event for outbound, args:
-	//		[category]		(string)	required	typically the object that was interacted with (e.g. button)
-	//		[action]		(string)	required	type of interaction (e.g. click)
+	//		[category]	(string)	required	typically the object that was interacted with (e.g. button)
+	//		[action]	(string)	required	type of interaction (e.g. click)
 	//		[label]		(string)	optional	useful for categorizing events (e.g. nav buttons)
 	//		[value]		(integer)	optional	values must be non-negative, useful to pass counts
 	page_event: function(category, action, label, value){
