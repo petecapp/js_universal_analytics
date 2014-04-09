@@ -1,7 +1,7 @@
 //assuming that universal_analytics.js has already been loaded
 
 //configure test ua (optional)
-_analtics.ua.test = {'UA-0000-3':'global'};
+_analytics.ua.test = {'UA-0000-3':'global'};
 
 //initialize with live ua numbers
 _analytics.init({'UA-0000-1':'global', 'UA-0000-2':'subdomain'});
