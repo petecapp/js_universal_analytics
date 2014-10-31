@@ -44,9 +44,9 @@ var _analytics = {
 
 		//additional options
 		if(param){
-			//display features
-			if(typeof param.display_features!='undefined' && param.display_features) this.display_features();
-
+			//display features if argument is undefined or true
+			if(typeof param.display_features=='undefined' || param.display_features==true) this.display_features();
+			
 			//track pageview if argument is undefined or true
 			if(typeof param.page_view=='undefined' || param.page_view==true) this.page_view();
 
