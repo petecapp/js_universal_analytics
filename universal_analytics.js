@@ -26,7 +26,9 @@ var _analytics = {
 	//		[inbound]	(object) 	required	analytic accounts		
 	//		[param]		(options)	optional	page_view (pageview), display_features (display features)
 	init: function(inbound,param){
-		var param = (typeof param=='undefined' || typeof param!='object') ? false : param;
+		var param = (typeof param=='undefined' || typeof param!='object') 
+			? { display_features:true, page_view:true } 
+			: param;
 
 		if(this.debug) console.log('function: init()');
 		if(typeof inbound!='object') return false;
@@ -42,15 +44,11 @@ var _analytics = {
 			if(this.debug) console.log('\tcreate: '+ua+' => '+this.ua[ua]);
 		}
 
-		//additional options
-		if(param){
-			//display features if argument is undefined or true
-			if(typeof param.display_features=='undefined' || param.display_features==true) this.display_features();
+		//display features if argument is undefined or true
+		if(param.display_features==true) this.display_features();
 			
-			//track pageview if argument is undefined or true
-			if(typeof param.page_view=='undefined' || param.page_view==true) this.page_view();
-
-		} else this.page_view();
+		//track pageview if argument is undefined or true
+		if(param.page_view==true) this.page_view();
 	},
 
 	//enable display features
