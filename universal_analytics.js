@@ -1,13 +1,14 @@
 //google documentation - https://developers.google.com/analytics/devguides/collection/analyticsjs/
 
-//create console object if non-existent
-if(typeof console=='undefined'){ window.console={ log:function(){}}; }
+//create console object fallback if non-existent
+(function(w,f,o,c,a){ if(!w[c]){ for(i=0;i<a.length;i++) o[a[i]]=f; w[c]=o; } })(window,function(){},{},'console',['warn','trace','timeEnd','time','profileEnd','profile','markTimeline','log','info','groupEnd','groupCollapsed','group','exception','error','dirxml','dir','debug','count','assert','clear','table','timeStamp']);
 
 //load universal analytics library
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+if(typeof _uga==='undefined')
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','_uga');
 
 //analytics object deifintion
 var _analytics = {
@@ -17,10 +18,11 @@ var _analytics = {
 	host:		window.location.host,
 	pound:		window.location.hash,
 	query:		window.location.search,
-	debug:		/([\?|&|#]debug)/.test(window.location.search) ? true : false,
 	page:		/\/([\w-\.]+)$/.test(window.location.pathname) ? 
 				window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) : false,
 	title: 		document.title,
+	debug: 	(/debug/gi.test(window.location.hash)) ? true : 
+				(/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
 	
 	//initialize analtics, args: 
 	//		[inbound]	(object) 	required	analytic accounts		
@@ -40,7 +42,7 @@ var _analytics = {
 		//universal analytics creation every item in outbound object
 		for(var ua in this.ua){
 			this.ua[ua] = this.ua[ua].replace(/\./gi,'');
-			ga('create', ua, {'name':this.ua[ua]});
+			_uga('create', ua, {'name':this.ua[ua]});
 			if(this.debug) console.log('\tcreate: '+ua+' => '+this.ua[ua]);
 		}
 
@@ -53,7 +55,7 @@ var _analytics = {
 
 	//enable display features
 	display_features: function(){
-		for(var ua in this.ua) ga(this.ua[ua]+'.require','displayfeatures');
+		for(var ua in this.ua) _uga(this.ua[ua]+'.require','displayfeatures');
 	},
 
 	//send pageview for outbound
@@ -63,7 +65,7 @@ var _analytics = {
 
 		if(this.debug) console.log('function: page_view()');
 		for(var ua in this.ua){
-			ga(this.ua[ua]+'.send', 'pageview', {
+			_uga(this.ua[ua]+'.send', 'pageview', {
 				'page': pv_page,
 				'title': pv_title
 			});
@@ -84,7 +86,7 @@ var _analytics = {
 			value = (typeof value=='undefined') ? null : value;
 
 		for(var ua in this.ua){
-			ga(this.ua[ua]+'.send', 'event', category, action, label, value);
+			_uga(this.ua[ua]+'.send', 'event', category, action, label, value);
 			if(this.debug) console.log('\tevent: '+ua+' => {'+category+','+action+','+label+','+value+'}');
 		}
 	}
