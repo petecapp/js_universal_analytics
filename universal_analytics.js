@@ -14,15 +14,17 @@ if(typeof _uga==='undefined')
 var _analytics = {
 	//page vars
 	ua:		{ test:{'UA-0000000-0':'test'} },
-	path:		window.location.pathname,
-	host:		window.location.host,
-	pound:		window.location.hash,
-	query:		window.location.search,
-	page:		/\/([\w-\.]+)$/.test(window.location.pathname) ? 
-				window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) : false,
-	title: 		document.title,
-	debug: 	(/debug/gi.test(window.location.hash)) ? true : 
-				(/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
+	path:	window.location.pathname,
+	host:	window.location.host.replace(/^www\./i,''),
+	pound:	window.location.hash,
+	query:	window.location.search,
+	page:	/\/([\w-\.]+)$/.test(window.location.pathname) 
+				? window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) 
+				: false,
+	title: 	document.title,
+	debug: 	(/debug/gi.test(window.location.hash)) 
+				? true 
+				: (/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
 	
 	//initialize analtics, args: 
 	//		[inbound]	(object) 	required	analytic accounts		
@@ -87,7 +89,7 @@ var _analytics = {
 
 		for(var ua in this.ua){
 			_uga(this.ua[ua]+'.send', 'event', category, action, label, value);
-			if(this.debug) console.log('\tevent: '+ua+' => {'+category+','+action+','+label+','+value+'}');
+			if(this.debug) console.log('\tevent: '+ua+' => {\n\t\t'+category+',\n\t\t'+action+',\n\t\t'+label+',\n\t\t'+value+'\n\t}');
 		}
 	}
 };
