@@ -24,7 +24,13 @@ var _anchor = {
 		if(_analytics.debug)
 			e.preventDefault();
 
-		var item = e.target;
+		var item = e.target, count=0;
+		while(item.nodeName.toLowerCase()!='a'){
+			if(count>10) break;
+			item = item.parentNode;
+			count++;
+		}
+				
 		if(typeof item.getAttribute('href')!=='undefined' && item.getAttribute('href')!=null){
 			var href = item.getAttribute('href').toLowerCase(),
 				target = (item.getAttribute('target')!=='undefined' && /blank/gi.test(item.getAttribute('target'))) ? 1 : null,
