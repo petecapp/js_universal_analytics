@@ -14,17 +14,16 @@ if(typeof _uga==='undefined')
 var _analytics = {
 	//page vars
 	ua:		{ test:{'UA-0000000-0':'test'} },
-	path:	window.location.pathname,
-	host:	window.location.host.replace(/^www\./i,''),
-	pound:	window.location.hash,
-	query:	window.location.search,
-	page:	/\/([\w-\.]+)$/.test(window.location.pathname) 
-				? window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) 
-				: false,
-	title: 	document.title,
-	debug: 	(/debug/gi.test(window.location.hash)) 
-				? true 
-				: (/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
+	path:		window.location.pathname,
+	host:		window.location.host,
+	pound:		window.location.hash,
+	query:		window.location.search,
+	page:		/\/([\w-\.]+)$/.test(window.location.pathname) ? 
+				window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) : false,
+	title: 		document.title,
+	debug:		(/debug/gi.test(window.location.hash)) 
+					? true
+					: (/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
 	
 	//initialize analtics, args: 
 	//		[inbound]	(object) 	required	analytic accounts		
@@ -34,7 +33,7 @@ var _analytics = {
 			? { display_features:true, page_view:true } 
 			: param;
 
-		if(this.debug) console.log('function: init()');
+		if(this.debug) console.log('_analytics: init()');
 		if(typeof inbound!='object') return false;
 		else this.ua.live = inbound; 
 		
@@ -65,7 +64,7 @@ var _analytics = {
 		pv_page = (typeof pv_page=='undefined') ? this.path : pv_page;
 		pv_title = (typeof pv_title=='undefined') ? this.title : pv_title;
 
-		if(this.debug) console.log('function: page_view()');
+		if(this.debug) console.log('_analytics: page_view()');
 		for(var ua in this.ua){
 			_uga(this.ua[ua]+'.send', 'pageview', {
 				'page': pv_page,
@@ -82,14 +81,89 @@ var _analytics = {
 	//		[label]		(string)	optional	useful for categorizing events (e.g. nav buttons)
 	//		[value]		(integer)	optional	values must be non-negative, useful to pass counts
 	page_event: function(category, action, label, value){
-		if(this.debug) console.log('function: page_event(category, action, label, value)');
+		if(this.debug) console.log('_analytics: page_event(category, action, label, value)');
 		if(typeof category=='undefined'||typeof action=='undefined') return false;
 		var label = (typeof label=='undefined') ? null : label,
 			value = (typeof value=='undefined') ? null : value;
 
 		for(var ua in this.ua){
 			_uga(this.ua[ua]+'.send', 'event', category, action, label, value);
-			if(this.debug) console.log('\tevent: '+ua+' => {\n\t\t'+category+',\n\t\t'+action+',\n\t\t'+label+',\n\t\t'+value+'\n\t}');
+			//if(this.debug) console.log('\tevent: '+ua+' => { '+category+', '+action+', '+label+', '+value+' }');
+
+			if(this.debug) console.log('\tua:\t\t\t'+ua+'\n\tcategory:\t'+category+'\n\taction:\t\t'+action+'\n\tlabel:\t\t'+label+'\n\tvalue:\t\t'+value);
+		}
+	}
+};
+
+var _anchor = {
+	init: function(){
+		if(_analytics.debug)
+			console.log('_anchor:init()');
+
+		//listen for new anchor elements
+		try {
+			this.listen();
+			document.addEventListener('DOMNodeInserted',function(e){
+				if(/^a$/i.test(e.target.nodeName)) this.listen();
+				return false;
+			});
+		} catch(error){
+			console.log('insert listener error');
+		};
+	},
+
+	listen: function(){
+		var anchor = document.querySelectorAll('a');
+		for(var i=0; i<anchor.length; i++){
+			var item = anchor[i];
+			item.addEventListener('click',this.track);
+		}
+	},
+
+	track: function(e){
+		if(_analytics.debug)
+			e.preventDefault();
+
+		var item = e.target, count=0;
+		while(item.nodeName.toLowerCase()!='a'){
+			if(count>10) break;
+			item = item.parentNode;
+			count++;
+		}
+				
+		if(typeof item.getAttribute('href')!=='undefined' && item.getAttribute('href')!=null){
+			if(_analytics.debug)
+				console.log('_anchor:track()');
+
+			var href = item.getAttribute('href').toLowerCase(),
+				target = (item.getAttribute('target')!=='undefined' && /blank/gi.test(item.getAttribute('target'))) ? 1 : null,
+				category = 'anchor link';
+
+			//mail to
+			if(/mailto/g.test(href))
+				_analytics.page_event(category,'mailto',href.replace(/^mailto:/gi,''),target);
+			
+			//download
+			else if(/\.(?:docx?|pptx?|xlsx?|avi|e(ps|xe)|gif|jpe?g|m(p[34]|ov|kv|4a)|p(df|ng)|rar|svg|txt|v(sd|xd)|wm[av]|zip)/.test(href)){
+				if(!/^(http:|\/\/)/i.test(href)){
+					if(!/^\//.test(href))
+						href = _analytics.path.replace(_analytics.page,'')+href;
+					href = _analytics.host+href;
+				} else
+					href = href.replace(/^https?:\/\//i,'');
+
+				_analytics.page_event(category,'download',href,target);
+			}
+
+			//external
+			else if(/(www|ftp|http(s)?:\/\/){1}[^'"\\]+/.test(href) && href.indexOf(_analytics.host)<0){
+				href = href.replace(/^https?:\/\//i,'');
+				_analytics.page_event(category,'external',href);
+			}
+
+			//hash
+			else if(/#/g.test(href))
+				_analytics.page_event(category,'hash',href);
 		}
 	}
 };
