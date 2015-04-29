@@ -13,25 +13,26 @@ if(typeof _uga==='undefined')
 //analytics object deifintion
 var _analytics = {
 	//page vars
-	ua:		{ test:{'UA-0000000-0':'test'} },
-	path:		window.location.pathname,
-	host:		window.location.host,
-	pound:		window.location.hash,
-	query:		window.location.search,
-	page:		/\/([\w-\.]+)$/.test(window.location.pathname) ? 
-				window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) : false,
+	ua:		{ test:{ test:'UA-0000000-0' } },
+	path:	window.location.pathname,
+	host:	window.location.host,
+	pound:	window.location.hash,
+	query:	window.location.search,
+	page:	/\/([\w-\.]+)$/.test(window.location.pathname) 
+				? window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1) 
+				: false,
 	title: 		document.title,
-	debug:		(/debug/gi.test(window.location.hash)) 
-					? true
-					: (/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
+	param: 	{ display_features:true, page_view:true },
+	debug:	(/debug/gi.test(window.location.hash)) 
+				? true
+				: (/([\?|&|\#]debug)/.test(window.location.search) ? true : false),
 	
 	//initialize analtics, args: 
 	//		[inbound]	(object) 	required	analytic accounts		
 	//		[param]		(options)	optional	page_view (pageview), display_features (display features)
 	init: function(inbound,param){
-		var param = (typeof param=='undefined' || typeof param!='object') 
-			? { display_features:true, page_view:true } 
-			: param;
+		if(typeof param!=='undefined' && typeof param=='object')
+			for(var i in param) this.param[i] = param[i];
 
 		if(this.debug) console.log('_analytics: init()');
 		if(typeof inbound!='object') return false;
@@ -39,24 +40,38 @@ var _analytics = {
 		
 		//override ua object to actual outbound
 		this.ua = (this.debug) ? this.ua.test : this.ua.live;
+		
 
 		//universal analytics creation every item in outbound object
-		for(var ua in this.ua){
-			this.ua[ua] = this.ua[ua].replace(/\./gi,'');
-			_uga('create', ua, {'name':this.ua[ua]});
-			if(this.debug) console.log('\tcreate: '+ua+' => '+this.ua[ua]);
+		for(var i in this.ua){
+
+			if(typeof this.ua[i]!=='object')
+				this.ua[i] = { id:this.ua[i], linker:false };
+			
+			if(this.ua[i].linker){
+				_uga('create', this.ua[i].id, { name:i, allowLinker:true });
+				_uga(i+'.require','linker');
+				_uga(i+'.linker:autoLink', [this.ua[i].linker] );
+			} else {
+				_uga('create', this.ua[i].id, {'name':i });
+			}
+				
+
+			if(this.debug) console.log('\tcreate: '+i+' => '+this.ua[i].id);
 		}
 
+
+
 		//display features if argument is undefined or true
-		if(param.display_features==true) this.display_features();
+		if(this.param.display_features==true) this.display_features();
 			
 		//track pageview if argument is undefined or true
-		if(param.page_view==true) this.page_view();
+		if(this.param.page_view==true) this.page_view();
 	},
 
 	//enable display features
 	display_features: function(){
-		for(var ua in this.ua) _uga(this.ua[ua]+'.require','displayfeatures');
+		for(var ua in this.ua) _uga(ua+'.require','displayfeatures');
 	},
 
 	//send pageview for outbound
@@ -65,13 +80,13 @@ var _analytics = {
 		pv_title = (typeof pv_title=='undefined') ? this.title : pv_title;
 
 		if(this.debug) console.log('_analytics: page_view()');
-		for(var ua in this.ua){
-			_uga(this.ua[ua]+'.send', 'pageview', {
+		for(var i in this.ua){
+			_uga(i+'.send', 'pageview', {
 				'page': pv_page,
 				'title': pv_title
 			});
 
-			if(this.debug) console.log('\tpageview: '+ua+' => '+this.ua[ua]);
+			if(this.debug) console.log('\tpageview: '+i+' => '+this.ua[i].id);
 		}
 	},
 
@@ -83,20 +98,21 @@ var _analytics = {
 	page_event: function(category, action, label, value){
 		if(this.debug) console.log('_analytics: page_event(category, action, label, value)');
 		if(typeof category=='undefined'||typeof action=='undefined') return false;
-		var label = (typeof label=='undefined') ? null : label,
+		var label = (typeof label=='undefined') ? null : label.replace(/[\?&]_ga=[\d\.]+/gi,''),
 			value = (typeof value=='undefined') ? null : value;
 
-		for(var ua in this.ua){
-			_uga(this.ua[ua]+'.send', 'event', category, action, label, value);
-			//if(this.debug) console.log('\tevent: '+ua+' => { '+category+', '+action+', '+label+', '+value+' }');
-
-			if(this.debug) console.log('\tua:\t\t\t'+ua+'\n\tcategory:\t'+category+'\n\taction:\t\t'+action+'\n\tlabel:\t\t'+label+'\n\tvalue:\t\t'+value);
+		for(var i in this.ua){
+			_uga(i+'.send', 'event', category, action, label, value);				
+			
+			if(this.debug) console.log('\tua:\t\t\t'+i+'\n\tcategory:\t'+category+'\n\taction:\t\t'+action+'\n\tlabel:\t\t'+label+'\n\tvalue:\t\t'+value);
 		}
 	}
 };
 
 var _anchor = {
 	init: function(){
+		var _this = this;
+
 		if(_analytics.debug)
 			console.log('_anchor:init()');
 
@@ -104,7 +120,7 @@ var _anchor = {
 		try {
 			this.listen();
 			document.addEventListener('DOMNodeInserted',function(e){
-				if(/^a$/i.test(e.target.nodeName)) this.listen();
+				if(/^a$/i.test(e.target.nodeName)) _this.listen();
 				return false;
 			});
 		} catch(error){
