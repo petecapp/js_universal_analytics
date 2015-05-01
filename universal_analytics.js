@@ -31,16 +31,22 @@ var _analytics = {
 	//		[inbound]	(object) 	required	analytic accounts		
 	//		[param]		(options)	optional	page_view (pageview), display_features (display features)
 	init: function(inbound,param){
+		this.event_count = 0;
+
 		if(typeof param!=='undefined' && typeof param=='object')
 			for(var i in param) this.param[i] = param[i];
 
-		if(this.debug) console.log('_analytics: init()');
+		if(this.debug){
+			window.ga_debug = {trace: true};
+			console.log('_analytics: init()');
+		}
+
 		if(typeof inbound!='object') return false;
 		else this.ua.live = inbound; 
 		
 		//override ua object to actual outbound
-		this.ua = (this.debug) ? this.ua.test : this.ua.live;
-		
+			//this.ua = (this.debug) ? this.ua.test : this.ua.live;
+		this.ua = this.ua.live;
 
 		//universal analytics creation every item in outbound object
 		for(var i in this.ua){
@@ -49,18 +55,15 @@ var _analytics = {
 				this.ua[i] = { id:this.ua[i], linker:false };
 			
 			if(this.ua[i].linker){
-				_uga('create', this.ua[i].id, { name:i, allowLinker:true });
+				_uga('create', this.ua[i].id, 'auto', { name:i, allowLinker:true });
 				_uga(i+'.require','linker');
 				_uga(i+'.linker:autoLink', [this.ua[i].linker] );
 			} else {
-				_uga('create', this.ua[i].id, {'name':i });
+				_uga('create', this.ua[i].id, 'auto', {'name':i });
 			}
 				
-
 			if(this.debug) console.log('\tcreate: '+i+' => '+this.ua[i].id);
 		}
-
-
 
 		//display features if argument is undefined or true
 		if(this.param.display_features==true) this.display_features();
@@ -69,43 +72,43 @@ var _analytics = {
 		if(this.param.page_view==true) this.page_view();
 	},
 
-	//enable display features
 	display_features: function(){
 		for(var ua in this.ua) _uga(ua+'.require','displayfeatures');
 	},
 
-	//send pageview for outbound
 	page_view: function(pv_page,pv_title){
 		pv_page = (typeof pv_page=='undefined') ? this.path : pv_page;
 		pv_title = (typeof pv_title=='undefined') ? this.title : pv_title;
 
 		if(this.debug) console.log('_analytics: page_view()');
 		for(var i in this.ua){
-			_uga(i+'.send', 'pageview', {
-				'page': pv_page,
-				'title': pv_title
-			});
-
-			if(this.debug) console.log('\tpageview: '+i+' => '+this.ua[i].id);
+			if(this.debug) 
+				console.log('\tpageview: '+i+' => '+this.ua[i].id);
+			else
+				_uga(i+'.send', 'pageview', {
+					'page': pv_page,
+					'title': pv_title
+				});
 		}
 	},
 
-	//send event for outbound, args:
-	//		[category]	(string)	required	typically the object that was interacted with (e.g. button)
-	//		[action]	(string)	required	type of interaction (e.g. click)
-	//		[label]		(string)	optional	useful for categorizing events (e.g. nav buttons)
-	//		[value]		(integer)	optional	values must be non-negative, useful to pass counts
-	page_event: function(category, action, label, value){
+	page_event: function(category, action, label, value, non_interaction){
 		if(this.debug) console.log('_analytics: page_event(category, action, label, value)');
-		if(typeof category=='undefined'||typeof action=='undefined') return false;
+		if(typeof category=='undefined' || typeof action=='undefined') return false;
+
 		var label = (typeof label=='undefined') ? null : label.replace(/[\?&]_ga=[\d\.]+/gi,''),
-			value = (typeof value=='undefined') ? null : value;
+			value = (typeof value=='undefined') ? null : value,
+			non_interaction = (typeof non_interaction=='undefined') ? false : non_interaction;
 
 		for(var i in this.ua){
-			_uga(i+'.send', 'event', category, action, label, value);				
-			
-			if(this.debug) console.log('\tua:\t\t\t'+i+'\n\tcategory:\t'+category+'\n\taction:\t\t'+action+'\n\tlabel:\t\t'+label+'\n\tvalue:\t\t'+value);
+			if(this.debug) 
+				console.log('\tua:\t\t\t\t\t'+this.ua[i].id+'\n\tcategory:\t\t\t'+category+'\n\taction:\t\t\t\t'+action+'\n\tlabel:\t\t\t\t'+label+'\n\tvalue:\t\t\t\t'+value+'\n\tnon-interaction:\t'+non_interaction);
+			else
+				_uga(i+'.send', 'event', category, action, label, value, non_interaction);			
 		}
+
+		this.event_count++;
+		if(this.debug) console.log('\n\tevent_count: '+this.event_count);
 	}
 };
 
@@ -151,6 +154,10 @@ var _anchor = {
 			if(_analytics.debug)
 				console.log('_anchor:track()');
 
+			if(/anchor_ignore/gi.test(item.getAttribute('class')))
+				return;
+
+
 			var href = item.getAttribute('href').toLowerCase(),
 				target = (item.getAttribute('target')!=='undefined' && /blank/gi.test(item.getAttribute('target'))) ? 1 : null,
 				category = 'anchor link';
@@ -180,6 +187,7 @@ var _anchor = {
 			//hash
 			else if(/#/g.test(href))
 				_analytics.page_event(category,'hash',href);
+
 		}
 	}
 };
