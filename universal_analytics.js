@@ -166,6 +166,10 @@ var _anchor = {
 			if(/mailto/g.test(href))
 				_analytics.page_event(category,'mailto',href.replace(/^mailto:/gi,''),target);
 			
+			//phone
+			else if(/^tel\:/i.test(href))
+				_analytics.page_event(category,'tele',href.replace(/^tel\:/gi,''),target);
+
 			//download
 			else if(/\.(?:docx?|pptx?|xlsx?|avi|e(ps|xe)|gif|jpe?g|m(p[34]|ov|kv|4a)|p(df|ng)|rar|svg|txt|v(sd|xd)|wm[av]|zip)/.test(href)){
 				if(!/^(http:|\/\/)/i.test(href)){
