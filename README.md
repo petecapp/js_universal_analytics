@@ -9,8 +9,25 @@ this script allows for multiple google analytics accounts to be set up and contr
 > #### usage
 > + test/debug ua        
         _analytics.ua.test = { global:'UA-0000-3' };
-+ live ua
-       _analytics.init({ global:'UA-0000-1', subdomain:'UA-0000-2' });
++ live ua        
+        _analytics.init({ global:'UA-0000-1', subdomain:'UA-0000-2' });
+
+
+try {
+	_analytics.init({ primary:'UA-5854796-6' });
+} catch(error){
+	console.log(error);
+}
+
+
+window.onload = function(){
+	try {
+		if(typeof _anchor!=='undefined') _anchor.init();	
+	} catch(error){
+		console.log('_anchor error');
+		console.log(error);
+	};
+}
 
 ## init options
 > + page_view: send ga page view on init [boolean]
